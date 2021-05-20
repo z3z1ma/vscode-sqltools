@@ -75,6 +75,12 @@ export const GetInsertQueryRequest = new RequestType<
   void
 >('connection/GetInsertQueryRequest');
 
+export const GetSelectQueryRequest = new RequestType<
+  { conn: IConnection, item: NSDatabase.ITable, columns: Array<NSDatabase.IColumn> },
+  string,
+  Error,
+  void
+>('connection/GetSelectQueryRequest');
 
 // @OPTIMIZE: later this will be replace by the native library when available
 export interface ProgressNotificationStartParams {

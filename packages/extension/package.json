@@ -321,6 +321,15 @@
                 }
             },
             {
+                "title": "Generate Select Query",
+                "command": "sqltools.generateSelectQuery",
+                "category": "SQLTools Sidebar",
+                "icon": {
+                    "light": "icons/edit-light.svg",
+                    "dark": "icons/edit-dark.svg"
+                }
+            },
+            {
                 "title": "Refresh",
                 "command": "sqltools.refreshTree",
                 "category": "SQLTools Sidebar",
@@ -945,6 +954,10 @@
                     "when": "false"
                 },
                 {
+                    "command": "sqltools.generateSelectQuery",
+                    "when": "false"
+                },
+                {
                     "command": "sqltools.attachFileToConnection",
                     "when": "!sqltools.file.connectionAttached && editorLangId == sql"
                 },
@@ -1052,6 +1065,11 @@
                     "group": "navigation@3"
                 },
                 {
+                    "command": "sqltools.generateSelectQuery",
+                    "when": "!editorReadonly && view == sqltoolsViewConnectionExplorer && viewItem =~ /^connection\\.(table|view)$/",
+                    "group": "navigation@3"
+                },
+                {
                     "command": "sqltools.insertText",
                     "when": "!editorReadonly && view == sqltoolsViewConnectionExplorer && viewItem =~ /^connection\\.(.+)/",
                     "group": "sqltools.connectionExplorer.edit@0"
@@ -1078,6 +1096,11 @@
                 },
                 {
                     "command": "sqltools.generateInsertQuery",
+                    "when": "view == sqltoolsViewConnectionExplorer && viewItem =~ /^connection\\.(table|view)$/",
+                    "group": "inline@0"
+                },
+                {
+                    "command": "sqltools.generateSelectQuery",
                     "when": "view == sqltoolsViewConnectionExplorer && viewItem =~ /^connection\\.(table|view)$/",
                     "group": "inline@0"
                 },

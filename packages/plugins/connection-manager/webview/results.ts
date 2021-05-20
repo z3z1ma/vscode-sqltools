@@ -131,8 +131,11 @@ export default class ResultsWebviewManager {
 
   get = (requestId: InternalID) => {
     if (!requestId) throw new Error('Missing request id to create results view');
+    
+    // Dispose all current queries
+    Object.keys(this.viewsMap).map(id => this.viewsMap[id].dispose());
 
-    return this.viewsMap[requestId] || this.createForId(requestId);
+    return this.createForId(requestId);
   }
 
   public getActiveView = () => {

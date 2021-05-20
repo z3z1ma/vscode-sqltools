@@ -20,7 +20,7 @@ import path from 'path';
 import { file } from 'tempy';
 import { CancellationTokenSource, commands, ConfigurationTarget, env as vscodeEnv, Progress, ProgressLocation, QuickPickItem, TextDocument, TextEditor, Uri, window, workspace } from 'vscode';
 import CodeLensPlugin from '../codelens/extension';
-import { ConnectRequest, DisconnectRequest, ForceListRefresh, GetChildrenForTreeItemRequest, GetConnectionPasswordRequest, GetConnectionsRequest, GetInsertQueryRequest, ProgressNotificationComplete, ProgressNotificationCompleteParams, ProgressNotificationStart, ProgressNotificationStartParams, RunCommandRequest, SaveResultsRequest, SearchConnectionItemsRequest, TestConnectionRequest } from './contracts';
+import { ConnectRequest, DisconnectRequest, ForceListRefresh, GetChildrenForTreeItemRequest, GetConnectionPasswordRequest, GetConnectionsRequest, GetInsertQueryRequest, GetSelectQueryRequest, ProgressNotificationComplete, ProgressNotificationCompleteParams, ProgressNotificationStart, ProgressNotificationStartParams, RunCommandRequest, SaveResultsRequest, SearchConnectionItemsRequest, TestConnectionRequest } from './contracts';
 import DependencyManager from './dependency-manager/extension';
 import { getExtension } from './extension-util';
 import statusBar from './status-bar';
@@ -70,6 +70,13 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
   private ext_getInsertQuery: RequestHandler<typeof GetInsertQueryRequest> = async (params) => {
     return this.client.sendRequest(
       GetInsertQueryRequest,
+      params,
+    );
+  }
+
+  private ext_getSelectQuery: RequestHandler<typeof GetSelectQueryRequest> = async (params) => {
+    return this.client.sendRequest(
+      GetSelectQueryRequest,
       params,
     );
   }
@@ -752,7 +759,8 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
       .registerCommand(`detachConnectionFromFile`, this.ext_detachConnectionFromFile)
       .registerCommand(`copyTextFromTreeItem`, this.ext_copyTextFromTreeItem)
       .registerCommand(`getChildrenForTreeItem`, this.ext_getChildrenForTreeItem)
-      .registerCommand(`getInsertQuery`, this.ext_getInsertQuery);
+      .registerCommand(`getInsertQuery`, this.ext_getInsertQuery)
+      .registerCommand(`getSelectQuery`, this.ext_getSelectQuery);;
 
     this.errorHandler = extension.errorHandler;
     this.explorer = new ConnectionExplorer();

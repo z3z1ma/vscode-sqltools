@@ -5,7 +5,7 @@ import { getConnectionId, migrateConnectionSetting } from '@sqltools/util/connec
 import csvStringify from 'csv-stringify/lib/sync';
 import { writeFile as writeFileWithCb } from 'fs';
 import { promisify } from 'util';
-import { ConnectRequest, DisconnectRequest, SearchConnectionItemsRequest, GetConnectionPasswordRequest, GetConnectionsRequest, RunCommandRequest, SaveResultsRequest, ProgressNotificationStart, ProgressNotificationComplete, TestConnectionRequest, GetChildrenForTreeItemRequest, ForceListRefresh, GetInsertQueryRequest } from './contracts';
+import { ConnectRequest, DisconnectRequest, SearchConnectionItemsRequest, GetConnectionPasswordRequest, GetConnectionsRequest, RunCommandRequest, SaveResultsRequest, ProgressNotificationStart, ProgressNotificationComplete, TestConnectionRequest, GetChildrenForTreeItemRequest, ForceListRefresh, GetInsertQueryRequest, GetSelectQueryRequest } from './contracts';
 import Handlers from './cache/handlers';
 import decorateLSException from '@sqltools/util/decorators/ls-decorate-exception';
 import { createLogger } from '@sqltools/log/src';
@@ -249,6 +249,16 @@ export default class ConnectionManagerPlugin implements ILanguageServerPlugin {
     return c.getInsertQuery(params);
   };
 
+  private GetSelectQueryHandler: RequestHandler<typeof GetSelectQueryRequest> = async (req) => {
+    if (!req || !req.conn) {
+      return "";
+    }
+    const { conn, ...params } = req;
+    let c = await this.getConnectionInstance(conn);
+    if (!c) return "";
+    return c.getSelectQuery(params);
+  };
+
   public register(server: typeof ConnectionManagerPlugin.prototype['server']) {
     this.server = this.server || server;
 
@@ -262,6 +272,7 @@ export default class ConnectionManagerPlugin implements ILanguageServerPlugin {
     this.server.onRequest(GetConnectionsRequest, this.clientRequestConnectionHandler);
     this.server.onRequest(GetChildrenForTreeItemRequest, this.GetChildrenForTreeItemHandler);
     this.server.onRequest(GetInsertQueryRequest, this.GetInsertQueryHandler);
+    this.server.onRequest(GetSelectQueryRequest, this.GetSelectQueryHandler);
     this.server.addOnDidChangeConfigurationHooks(() => this._autoConnectIfActive());
   }
 

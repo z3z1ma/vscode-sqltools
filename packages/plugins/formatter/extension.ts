@@ -68,6 +68,19 @@ async function generateInsertQueryHandler(item: SidebarItem) {
   return insertText(new SnippetString(formatInsertQuery(insertQuery, Config.format)));
 }
 
+async function generateSelectQueryHandler(item: SidebarItem) {
+  const columns: NSDatabase.IColumn[] = await commands.executeCommand(`${EXT_NAMESPACE}.getChildrenForTreeItem`, {
+    conn: item.conn,
+    item: item.metadata,
+  });
+  const selectQuery: string = await commands.executeCommand(`${EXT_NAMESPACE}.getSelectQuery`, {
+    conn: item.conn,
+    item: item.metadata,
+    columns
+  })
+  return insertText(new SnippetString(queryFormat(selectQuery, Config.format)));
+}
+
 function newSqlFileHandler() {
   return getOrCreateEditor(true);
 }
@@ -77,6 +90,7 @@ const register = (extension: IExtension) => {
     .registerCommand(`insertText`, insertTextHandler)
     .registerCommand(`copyText`, copyTextHandler)
     .registerCommand(`generateInsertQuery`, generateInsertQueryHandler)
+    .registerCommand(`generateSelectQuery`, generateSelectQueryHandler)
     .registerCommand(`newSqlFile`, newSqlFileHandler);
 }
 

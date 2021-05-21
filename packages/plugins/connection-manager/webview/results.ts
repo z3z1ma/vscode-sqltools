@@ -49,30 +49,8 @@ class ResultsWebview extends WebviewProvider<ResultsScreenState> {
   }
 
   show() {
-    if (!this.isOpen) {
-      this.whereToShow = null;
-      switch (Config.results.location) {
-        case 'active': // fallback older version
-        case 'current':
-          this.whereToShow = vscode.ViewColumn.Active;
-          break;
-        case 'end':
-          this.whereToShow = vscode.ViewColumn.Three;
-          break;
-        case 'beside': // fallback
-        default:
-          if (!vscode.window.activeTextEditor) {
-            this.whereToShow = vscode.ViewColumn.One;
-          } else if (Config.results && typeof Config.results.location === 'number' && Config.results.location >= -1 && Config.results.location <= 9 && Config.results.location !== 0) {
-            this.whereToShow = Config.results.location;
-          } else if (vscode.window.activeTextEditor.viewColumn === vscode.ViewColumn.One) {
-            this.whereToShow = vscode.ViewColumn.Two;
-          } else {
-            this.whereToShow = vscode.ViewColumn.Three;
-          }
-          break;
-      }
-    }
+    vscode.commands.executeCommand('workbench.action.editorLayoutTwoRows');
+    this.whereToShow = vscode.ViewColumn.Two;
 
     super.show();
 
@@ -131,11 +109,16 @@ export default class ResultsWebviewManager {
 
   get = (requestId: InternalID) => {
     if (!requestId) throw new Error('Missing request id to create results view');
+    const view = this.createForId(requestId);
     
-    // Dispose all current queries
-    Object.keys(this.viewsMap).map(id => this.viewsMap[id].dispose());
+    // Dispose all current queries except the new one
+    Object.keys(this.viewsMap).map(id => {
+      if (id !== requestId) {
+        this.viewsMap[id].dispose();
+      }
+    });
 
-    return this.createForId(requestId);
+    return view;
   }
 
   public getActiveView = () => {

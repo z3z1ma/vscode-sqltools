@@ -175,8 +175,8 @@ export default class Connection {
     if (this.conn.getSelectQuery && typeof this.conn.getSelectQuery === 'function') {
       return this.conn.getSelectQuery(params);
     }
-    const { item } = params;
-    return `SELECT * FROM ${item.schema}.${item.label}`;
+    const { item, columns } = params;
+    return `SELECT ${columns.map((col) => col.label).join(', ')} FROM ${item.schema}.${item.label}`;;
   }
 
   public searchItems(itemType: ContextValue, search: string = '', extraParams = {}) {

@@ -25,6 +25,7 @@ import DependencyManager from './dependency-manager/extension';
 import { getExtension } from './extension-util';
 import statusBar from './status-bar';
 import { removeAttachedConnection, attachConnection, getAttachedConnection } from './attached-files';
+import child_process from 'child_process';
 
 const log = createLogger('conn-man');
 
@@ -248,6 +249,35 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
     return query;
   }
 
+  private getDbtCompiled = async () => {
+    var currentlyOpenTabfilePath = window.activeTextEditor.document.fileName;
+    var currentlyOpenTabfileName = path.relative(workspace.workspaceFolders[0].uri.fsPath, currentlyOpenTabfilePath);
+    var compiledPath = path.join(workspace.workspaceFolders[0].uri.fsPath, 'target/compiled/balboa', currentlyOpenTabfileName);
+    var openPath = Uri.file(compiledPath);
+    try {
+      await workspace.fs.stat(openPath);
+    } catch {
+      await new Promise<void>((resolve, reject) => {
+        child_process.exec('dbt compile', (err, stdout, stderr) => {
+          if (err) {
+            console.log(stderr);
+            reject(err);
+          } else {
+            console.log(stdout);
+            resolve();
+          }
+        });
+      });
+    }
+
+    var query = '';
+    await workspace.openTextDocument(openPath).then(doc => {
+      query = doc.getText();
+    });
+
+    return query;
+  }
+
   private ext_executeQuery = async (query?: string, { connNameOrId, connId, ...opt }: IQueryOptions = {}) => {
     try {
       query = typeof query === 'string' ? query : await getSelectedText('execute query');
@@ -271,7 +301,12 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
         await this._connect();
       }
 
-      query = await this.replaceParams(query);
+      if (query.includes('{{')) {
+        query = await this.getDbtCompiled();
+      } else {
+        query = await this.replaceParams(query);
+      }
+      
       const view = await this._openResultsWebview(opt.requestId);
       const payload = await this._runConnectionCommandWithArgs('query', query, { ...opt, requestId: view.requestId });
       this.updateViewResults(view, payload);

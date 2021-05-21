@@ -24,7 +24,7 @@
     "sqltools.sessionFilesFolder": "/tmp",
     "sqltools.results": {
       "limit": 100,
-      "location": "next",
+      "location": "end",
       "customization": {
         "table-cell-padding": "2px 4px"
       }

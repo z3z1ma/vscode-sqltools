@@ -26,6 +26,8 @@ import { getExtension } from './extension-util';
 import statusBar from './status-bar';
 import { removeAttachedConnection, attachConnection, getAttachedConnection } from './attached-files';
 import child_process from 'child_process';
+import { readFileSync } from "fs";
+import { safeLoad } from "js-yaml";
 
 const log = createLogger('conn-man');
 
@@ -249,10 +251,28 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
     return query;
   }
 
+  private readAndParseProjectConfig() {
+    try {
+      const dbtProjectYamlFile = readFileSync(
+        path.join(workspace.workspaceFolders[0].uri.fsPath, 'dbt_project.yml'),
+        "utf8"
+      );
+      return safeLoad(dbtProjectYamlFile) as any;
+    } catch (error) {
+      console.log(error);
+      return {
+        name: "",
+        targetPath: "target",
+        sourcePaths: ["models"],
+      };
+    }
+  }
+
   private getDbtCompiled = async () => {
+    var projectName = this.readAndParseProjectConfig().name;
     var currentlyOpenTabfilePath = window.activeTextEditor.document.fileName;
     var currentlyOpenTabfileName = path.relative(workspace.workspaceFolders[0].uri.fsPath, currentlyOpenTabfilePath);
-    var compiledPath = path.join(workspace.workspaceFolders[0].uri.fsPath, 'target/compiled/balboa', currentlyOpenTabfileName);
+    var compiledPath = path.join(workspace.workspaceFolders[0].uri.fsPath, `target/compiled/${projectName}`, currentlyOpenTabfileName);
     var openPath = Uri.file(compiledPath);
     try {
       await workspace.fs.stat(openPath);

@@ -26,8 +26,13 @@ import { getExtension } from './extension-util';
 import statusBar from './status-bar';
 import { removeAttachedConnection, attachConnection, getAttachedConnection } from './attached-files';
 import child_process from 'child_process';
-import { readFileSync } from "fs";
-import { safeLoad } from "js-yaml";
+import { readFileSync } from 'fs';
+import { safeLoad } from 'js-yaml';
+import {
+  CommandProcessExecution,
+  CommandProcessExecutionFactory,
+} from '@sqltools/plugins/connection-manager/dbt/commandProcessExecution';
+import { PythonEnvironment } from '@sqltools/plugins/connection-manager/dbt/pythonEnvironment';
 
 const log = createLogger('conn-man');
 
@@ -39,6 +44,8 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
   private errorHandler: IExtension['errorHandler'];
   private explorer: ConnectionExplorer;
   private codeLensPlugin: CodeLensPlugin;
+  private pythonEnvironment = new PythonEnvironment();
+  private commandProcessExecutionFactory = new CommandProcessExecutionFactory();
 
   // extension commands
   private ext_refreshTree = (connIdOrTreeItem: SidebarConnection | SidebarConnection[]) => {
@@ -270,30 +277,35 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
 
   private getDbtCompiled = async () => {
     var projectName = this.readAndParseProjectConfig().name;
+    const cwd = workspace.workspaceFolders[0].uri.fsPath;
     var currentlyOpenTabfilePath = window.activeTextEditor.document.fileName;
-    var currentlyOpenTabfileName = path.relative(workspace.workspaceFolders[0].uri.fsPath, currentlyOpenTabfilePath);
-    var compiledPath = path.join(workspace.workspaceFolders[0].uri.fsPath, `target/compiled/${projectName}`, currentlyOpenTabfileName);
+    var currentlyOpenTabfileName = path.relative(cwd, currentlyOpenTabfilePath);
+    var compiledPath = path.join(cwd, `target/compiled/${projectName}`, currentlyOpenTabfileName);
     var openPath = Uri.file(compiledPath);
+
     try {
       await workspace.fs.stat(openPath);
     } catch {
-      await new Promise<void>((resolve, reject) => {
-        child_process.exec('dbt compile', (err, stdout, stderr) => {
-          if (err) {
-            console.log(stderr);
-            reject(err);
-          } else {
-            console.log(stdout);
-            resolve();
-          }
-        });
-      });
+      const pythonEnvironment = await this.pythonEnvironment.getEnvironment();
+      const pythonPath = pythonEnvironment.getPythonPath();
+
+      const process = this.commandProcessExecutionFactory.createCommandProcessExecution(
+        pythonPath,
+        ['-c', 'import dbt.main; dbt.main.main(["compile"])'],
+        cwd
+      );
+      await process.complete();
+      process.dispose();
     }
 
     var query = '';
-    await workspace.openTextDocument(openPath).then(doc => {
-      query = doc.getText();
-    });
+    try {
+      await workspace.openTextDocument(openPath).then(doc => {
+        query = doc.getText();
+      });
+    } catch {
+      console.log("Could not compile model.");
+    }
 
     return query;
   }

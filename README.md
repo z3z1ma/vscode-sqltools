@@ -2,6 +2,8 @@
   <img src="https://raw.githubusercontent.com/mtxr/vscode-sqltools/dev/static/header-hero.svg?sanitize=true" />
 </p>
 
+# With support for dbt jinja models!
+
 <hr />
 
 <p style='text-align: center;'>

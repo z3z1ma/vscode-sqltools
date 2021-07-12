@@ -309,6 +309,7 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
   }
 
   private ext_executeQuery = async (query?: string, { connNameOrId, connId, ...opt }: IQueryOptions = {}) => {
+    var view = null;
     try {
       query = typeof query === 'string' ? query : await getSelectedText('execute query');
       connNameOrId = connId || connNameOrId;
@@ -331,17 +332,21 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
         await this._connect();
       }
 
+      view = await this._openResultsWebview(opt.requestId);
+
       if (query.includes('{{')) {
         query = await this.getDbtCompiled();
       } else {
         query = await this.replaceParams(query);
       }
       
-      const view = await this._openResultsWebview(opt.requestId);
       const payload = await this._runConnectionCommandWithArgs('query', query, { ...opt, requestId: view.requestId });
       this.updateViewResults(view, payload);
       return payload;
     } catch (e) {
+      if (view) {
+        view.dispose();
+      }
       this.errorHandler('Error fetching records.', e);
     }
   }

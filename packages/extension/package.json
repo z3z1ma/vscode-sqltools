@@ -312,15 +312,6 @@
                 "category": "SQLTools Sidebar"
             },
             {
-                "title": "Generate Insert Query",
-                "command": "sqltools.generateInsertQuery",
-                "category": "SQLTools Sidebar",
-                "icon": {
-                    "light": "icons/add-light.svg",
-                    "dark": "icons/add-dark.svg"
-                }
-            },
-            {
                 "title": "Generate Select Query",
                 "command": "sqltools.generateSelectQuery",
                 "category": "SQLTools Sidebar",

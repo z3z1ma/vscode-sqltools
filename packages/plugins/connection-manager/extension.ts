@@ -25,12 +25,10 @@ import DependencyManager from './dependency-manager/extension';
 import { getExtension } from './extension-util';
 import statusBar from './status-bar';
 import { removeAttachedConnection, attachConnection, getAttachedConnection } from './attached-files';
-import child_process from 'child_process';
 import { readFileSync } from 'fs';
 import { safeLoad } from 'js-yaml';
 import {
-  CommandProcessExecution,
-  CommandProcessExecutionFactory,
+  CommandProcessExecutionFactory
 } from '@sqltools/plugins/connection-manager/dbt/commandProcessExecution';
 import { PythonEnvironment } from '@sqltools/plugins/connection-manager/dbt/pythonEnvironment';
 
@@ -288,10 +286,10 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
     } catch {
       const pythonEnvironment = await this.pythonEnvironment.getEnvironment();
       const pythonPath = pythonEnvironment.getPythonPath();
-
+      const modelName = path.parse(currentlyOpenTabfilePath).base.toLowerCase().replace('.sql', '');
       const process = this.commandProcessExecutionFactory.createCommandProcessExecution(
         pythonPath,
-        ['-c', 'import dbt.main; dbt.main.main(["compile"])'],
+        ['-c', `import dbt.main; dbt.main.main(["compile", "--model", "+${modelName}"])`],
         cwd
       );
       await process.complete();

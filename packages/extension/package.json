@@ -941,10 +941,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "sqltools.generateInsertQuery",
-                    "when": "false"
-                },
-                {
                     "command": "sqltools.generateSelectQuery",
                     "when": "false"
                 },
@@ -1051,11 +1047,6 @@
                     "group": "navigation@2"
                 },
                 {
-                    "command": "sqltools.generateInsertQuery",
-                    "when": "!editorReadonly && view == sqltoolsViewConnectionExplorer && viewItem =~ /^connection\\.(table|view)$/",
-                    "group": "navigation@3"
-                },
-                {
                     "command": "sqltools.generateSelectQuery",
                     "when": "!editorReadonly && view == sqltoolsViewConnectionExplorer && viewItem =~ /^connection\\.(table|view)$/",
                     "group": "navigation@3"
@@ -1083,11 +1074,6 @@
                 {
                     "command": "sqltools.closeConnection",
                     "when": "view == sqltoolsViewConnectionExplorer && viewItem == connectedConnection",
-                    "group": "inline@0"
-                },
-                {
-                    "command": "sqltools.generateInsertQuery",
-                    "when": "view == sqltoolsViewConnectionExplorer && viewItem =~ /^connection\\.(table|view)$/",
                     "group": "inline@0"
                 },
                 {

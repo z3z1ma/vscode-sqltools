@@ -25,7 +25,7 @@ import DependencyManager from './dependency-manager/extension';
 import { getExtension } from './extension-util';
 import statusBar from './status-bar';
 import { removeAttachedConnection, attachConnection, getAttachedConnection } from './attached-files';
-import { readFileSync } from 'fs';
+import { readFileSync, unlinkSync, existsSync } from 'fs';
 import { safeLoad } from 'js-yaml';
 import {
   CommandProcessExecutionFactory
@@ -279,25 +279,25 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
     var currentlyOpenTabfilePath = window.activeTextEditor.document.fileName;
     var currentlyOpenTabfileName = path.relative(cwd, currentlyOpenTabfilePath);
     var compiledPath = path.join(cwd, `target/compiled/${projectName}`, currentlyOpenTabfileName);
-    var openPath = Uri.file(compiledPath);
-
-    try {
-      await workspace.fs.stat(openPath);
-    } catch {
-      const pythonEnvironment = await this.pythonEnvironment.getEnvironment();
-      const pythonPath = pythonEnvironment.getPythonPath();
-      const modelName = path.parse(currentlyOpenTabfilePath).base.toLowerCase().replace('.sql', '');
-      const process = this.commandProcessExecutionFactory.createCommandProcessExecution(
-        pythonPath,
-        ['-c', `import dbt.main; dbt.main.main(["compile", "--model", "+${modelName}"])`],
-        cwd
-      );
-      await process.complete();
-      process.dispose();
+    const pythonEnvironment = await this.pythonEnvironment.getEnvironment();
+    const pythonPath = pythonEnvironment.getPythonPath();
+    const modelName = path.parse(currentlyOpenTabfilePath).base.toLowerCase().replace('.sql', '');
+    // Remove compiled file if already exists
+    if (existsSync(compiledPath)) {
+      unlinkSync(compiledPath);
     }
+    // Compile model using dbt library
+    const process = this.commandProcessExecutionFactory.createCommandProcessExecution(
+      pythonPath,
+      ['-c', `import dbt.main; dbt.main.main(["compile", "--model", "${modelName}"])`],
+      cwd
+    );
+    await process.complete();
+    process.dispose();
 
     var query = '';
     try {
+      var openPath = Uri.file(compiledPath);
       await workspace.openTextDocument(openPath).then(doc => {
         query = doc.getText();
       });

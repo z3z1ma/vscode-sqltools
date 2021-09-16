@@ -289,7 +289,7 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
     // Compile model using dbt library
     const process = this.commandProcessExecutionFactory.createCommandProcessExecution(
       pythonPath,
-      ['-c', `import dbt.main; dbt.main.main(["compile", "--model", "${modelName}"])`],
+      ['-c', `import dbt.main; dbt.main.main(["compile", "--model", "+${modelName}"])`],
       cwd
     );
     await process.complete();
@@ -297,10 +297,7 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
 
     var query = '';
     try {
-      var openPath = Uri.file(compiledPath);
-      await workspace.openTextDocument(openPath).then(doc => {
-        query = doc.getText();
-      });
+      query = readFileSync(compiledPath, "utf8");
     } catch {
       console.log("Could not compile model.");
     }

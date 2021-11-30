@@ -257,7 +257,7 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
   }
 
   private readAndParseProjectConfig() {
-    var tryPath = workspace.workspaceFolders[0].uri.fsPath;
+    var tryPath = path.dirname(window.activeTextEditor.document.fileName);
     const dbtProjectFile = "dbt_project.yml";
     while (!existsSync(path.join(tryPath, dbtProjectFile)) && tryPath !== "/") {
       tryPath = path.resolve(tryPath, '../')

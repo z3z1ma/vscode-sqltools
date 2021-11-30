@@ -257,12 +257,19 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
   }
 
   private readAndParseProjectConfig() {
+    var tryPath = workspace.workspaceFolders[0].uri.fsPath;
+    const dbtProjectFile = "dbt_project.yml";
+    while (!existsSync(path.join(tryPath, dbtProjectFile)) && tryPath !== "/") {
+      tryPath = path.resolve(tryPath, '../')
+    }
     try {
       const dbtProjectYamlFile = readFileSync(
-        path.join(workspace.workspaceFolders[0].uri.fsPath, 'dbt_project.yml'),
+        path.join(tryPath, dbtProjectFile),
         "utf8"
       );
-      return safeLoad(dbtProjectYamlFile) as any;
+      return {
+        dbtProject: safeLoad(dbtProjectYamlFile), path: tryPath
+      };
     } catch (error) {
       console.log(error);
       return {
@@ -274,11 +281,12 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
   }
 
   private getDbtCompiled = async () => {
-    var projectName = this.readAndParseProjectConfig().name;
-    const cwd = workspace.workspaceFolders[0].uri.fsPath;
+    var dbtProjectInfo = this.readAndParseProjectConfig();
+    var projectName = dbtProjectInfo.dbtProject.name;
+    var dbtProjectPath = dbtProjectInfo.path;
     var currentlyOpenTabfilePath = window.activeTextEditor.document.fileName;
-    var currentlyOpenTabfileName = path.relative(cwd, currentlyOpenTabfilePath);
-    var compiledPath = path.join(cwd, `target/compiled/${projectName}`, currentlyOpenTabfileName);
+    var currentlyOpenTabfileName = path.relative(dbtProjectPath, currentlyOpenTabfilePath);
+    var compiledPath = path.join(dbtProjectPath, `target/compiled/${projectName}`, currentlyOpenTabfileName);
     const pythonEnvironment = await this.pythonEnvironment.getEnvironment();
     const pythonPath = pythonEnvironment.getPythonPath();
     const modelName = path.parse(currentlyOpenTabfilePath).base.toLowerCase().replace('.sql', '');
@@ -290,7 +298,7 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
     const process = this.commandProcessExecutionFactory.createCommandProcessExecution(
       pythonPath,
       ['-c', `import dbt.main; dbt.main.main(["compile", "--model", "+${modelName}"])`],
-      cwd
+      dbtProjectPath
     );
     await process.complete();
     process.dispose();
@@ -336,7 +344,7 @@ export class ConnectionManagerPlugin implements IExtensionPlugin {
       } else {
         query = await this.replaceParams(query);
       }
-      
+
       const payload = await this._runConnectionCommandWithArgs('query', query, { ...opt, requestId: view.requestId });
       this.updateViewResults(view, payload);
       return payload;

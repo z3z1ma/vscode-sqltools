@@ -96,7 +96,8 @@
     "activationEvents": [
         "*",
         "onLanguage:sql",
-        "onCommand:sqltools.selectConnection"
+        "onCommand:sqltools.selectConnection",
+        "workspaceContains:**/dbt_project.yml"
     ],
     "contributes": {
         "colors": [
